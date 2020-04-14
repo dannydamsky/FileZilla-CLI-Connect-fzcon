@@ -110,9 +110,9 @@ fi
 # Determine the location of the FileZilla sitemanager.xml file.
 
 if [ -f "$HOME/.config/filezilla/sitemanager.xml" ]; then # Check for sitemanager.xml in the default Linux home directory path.
-	$SITEMANAGER="$HOME/.config/filezilla/sitemanager.xml"
+	SITEMANAGER="$HOME/.config/filezilla/sitemanager.xml"
 elif [ -f "/mnt/c/Users/User/AppData/Roaming/FileZilla/sitemanager.xml" ]; then # Check for sitemanager.xml in the default WSL path.
-	$SITEMANAGER="/mnt/c/Users/User/AppData/Roaming/FileZilla/sitemanager.xml"
+	SITEMANAGER="/mnt/c/Users/User/AppData/Roaming/FileZilla/sitemanager.xml"
 else
 	printf "Filezilla Site Manager configuration not detected.\n"
 	exit 1
