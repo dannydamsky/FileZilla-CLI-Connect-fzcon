@@ -144,8 +144,14 @@ else
 	exit 1;
 fi
 
-# Parse the sitemanager.xml file
-sites=$(run < $SITEMANAGER);
+if [ -f "$HOME/.fzcon.cache" ] && [ "$HOME/.fzcon.cache" -nt "$SITEMANAGER" ]; then # Check if a cache exists that is newer than the last modification of sitemanager.xml
+	# Base64-decode the cache.
+	sites=$(base64 -d $HOME/.fzcon.cache);
+else
+	# Parse the sitemanager.xml file
+	sites=$(run < $SITEMANAGER);
+	echo "$(echo "$sites" | base64 -)" > $HOME/.fzcon.cache;
+fi
 
 # Search for the first argument inside the names of the sitemanager.xml entries.
 request=$(printf "%s" "$sites" | grep -E "^$1 ");
