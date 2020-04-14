@@ -2,7 +2,7 @@
 Helper script to automatically connect to site entries stored in FileZilla using SSH and SFTP.
 
 # Dependencies
-- SSH Client
+- SSH Client (Such as OpenSSL)
 - sshpass
 - column
 - FileZilla
