@@ -12,6 +12,9 @@ Helper script to automatically connect to site entries stored in FileZilla using
 2. Connection Type (default is SSH, options include: --sftp, --tunnel)
 3. Tunnel Port, only used if the second argument is --tunnel, default is 8888.
 
+Not passing any arguments to the utility will make the utility print out the available
+options.
+
 # Installation
 Put the fzcon script in /usr/local/bin, make sure it has execute privileges.
 
