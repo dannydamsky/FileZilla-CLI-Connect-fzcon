@@ -1,16 +1,16 @@
 #!/bin/bash
-###################################################################################################
-## Helper script to automatically connect to site entries stored in FileZilla using SSH and SFTP. ##
-##																								  ##
-## Arguments:																					  ##
-## $1 - entry name (snake_case)																	  ##
-## $2 - connection type (default is SSH, options include: --sftp and --tunnel)  				  ##
-## $3 - tunnel port, only used when the second argument is --tunnel						  		  ##
-##																								  ##
-##																								  ##
-## Author: Danny Damsky <dannydamsky99@gmail.com>												  ##
-## Since: 2020-04-15																			  ##
-###################################################################################################
+###
+## Helper script to automatically connect to site entries stored in FileZilla using SSH and SFTP.
+##
+## Arguments:
+## $1 - entry name (snake_case)
+## $2 - connection type (default is SSH, options include: --sftp and --tunnel)
+## $3 - tunnel port, only used when the second argument is --tunnel
+##
+##
+## Author: Danny Damsky <dannydamsky99@gmail.com>
+## Since: 2020-04-15
+###
 
 # Helper function used to read XML content.
 read_dom() {
