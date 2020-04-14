@@ -1,0 +1,155 @@
+#!/bin/bash
+###################################################################################################
+## Helper script to automatically connect to site entries stored in FileZilla using SSH and SFTP. ##
+##																								  ##
+## Arguments:																					  ##
+## $1 - entry name (snake_case)																	  ##
+## $2 - connection type (default is SSH, options include: --sftp and --tunnel)  				  ##
+## $3 - tunnel port, only used when the second argument is --tunnel						  		  ##
+##																								  ##
+##																								  ##
+## Author: Danny Damsky <dannydamsky99@gmail.com>												  ##
+## Since: 2020-04-15																			  ##
+###################################################################################################
+
+# Helper function used to read XML content.
+read_dom() {
+	local IFS=\>
+	read -r -d \< ENTITY CONTENT
+}
+
+# Connect using SSH.
+# $1 - password
+# $2 - username
+# $3 - hostname
+# $4 - port
+conn_ssh() {
+	sshpass -p $1 ssh -o "StrictHostKeyChecking no" -o "ServerAliveInterval 1" $2@$3 -p $4
+}
+
+# Connect using SSH and open a tunnel on the given port.
+# $1 - password
+# $2 - username
+# $3 - hostname
+# $4 - port
+# $5 - tunnel port
+conn_ssh_tunnel() {
+	sshpass -p $1 ssh -o "StrictHostKeyChecking no" -o "ServerAliveInterval 1" $2@$3 -p $4 -D $5
+}
+
+# Connect using SFTP.
+# $1 - password
+# $2 - username
+# $3 - hostname
+# $4 - port
+conn_sftp() {
+	sshpass -p $1 sftp -o "StrictHostKeyChecking no" -o "ServerAliveInterval 1" -P $4 $2@$3
+}
+
+# Parse and print the data in sitemanager.xml
+run() {
+	local name=""
+	local host=""
+	local port=""
+	local pass=""
+	local user=""
+	local data=""
+
+	while read_dom; do
+		case "$ENTITY" in
+		"Host")
+			host=$CONTENT
+			;;
+		"Port")
+			port=$CONTENT
+			;;
+		"User")
+			user=$CONTENT
+			;;
+		"Pass encoding=\"base64\"")
+			pass=$(echo $CONTENT | base64 -d -)
+			;;
+		"Name")
+			name=$(echo $CONTENT | sed 's/\s/_/gm' | tr '[:upper:]' '[:lower:]')
+			;;
+		"/Server")
+			if
+				[ -n "$name" ] && [ -n "$host" ] && [ -n "$port" ] && [ -n "$pass" ] && [ -n "$user" ] &&
+					[[ "$name" != "" ]] && [[ "$host" != "" ]] && [[ "$port" != "" ]] && [[ "$pass" != "" ]] && [[ "$user" != "" ]]
+			then
+				data="$data$name $user $host $port $pass\n"
+			fi
+			name=""
+			host=""
+			port=""
+			pass=""
+			user=""
+			;;
+		esac
+	done
+	echo -e "$data"
+}
+
+# Check for dependencies.
+
+if [ -z "$(command -v sshpass)" ]; then
+	printf "Please install sshpass before using this tool.\n"
+	exit 1
+fi
+
+if [ -z "$(command -v ssh)" ] || [ -z "$(command -v sftp)" ]; then
+	printf "Please install an ssh client such as OpenSSL before using this tool.\n"
+	exit 1
+fi
+
+if [ -z "$(command -v column)" ]; then
+	printf "Please install column before using this tool.\n"
+	exit 1
+fi
+
+# Determine the location of the FileZilla sitemanager.xml file.
+
+if [ -f "$HOME/.config/filezilla/sitemanager.xml" ]; then # Check for sitemanager.xml in the default Linux home directory path.
+	$SITEMANAGER="$HOME/.config/filezilla/sitemanager.xml"
+elif [ -f "/mnt/c/Users/User/AppData/Roaming/FileZilla/sitemanager.xml" ]; then # Check for sitemanager.xml in the default WSL path.
+	$SITEMANAGER="/mnt/c/Users/User/AppData/Roaming/FileZilla/sitemanager.xml"
+else
+	printf "Filezilla Site Manager configuration not detected.\n"
+	exit 1
+fi
+
+# Parse the sitemanager.xml file
+sites=$(run <$SITEMANAGER)
+
+# Search for the first argument inside the names of the sitemanager.xml entries.
+request=$(printf "%s" "$sites" | grep -E "^$1 ")
+
+# Print the entries and exit, if a matching entry hasn't been found.
+if [ -z "$request" ]; then
+	sitesPrint="NAME USER HOST PORT PASS\n${sites}"
+	echo -e "$sitesPrint" | column -t -s ' '
+	exit 1
+fi
+
+# Convert the matching entry to an array: [0] => name, [1] => username, [2] => hostname, [3] => port, [4] => password
+items=($request)
+
+case "$2" in
+"--sftp")
+	conn_sftp "${items[4]}" "${items[1]}" "${items[2]}" "${items[3]}"
+	;;
+"--tunnel")
+	if [ -z "$3" ]; then
+		port="8888"
+	else
+		port="$3"
+	fi
+	printf "Listening on port $port ...\n"
+	conn_ssh_tunnel "${items[4]}" "${items[1]}" "${items[2]}" "${items[3]}" "${port}"
+	;;
+*)
+	conn_ssh "${items[4]}" "${items[1]}" "${items[2]}" "${items[3]}"
+	;;
+esac
+
+exit 0
