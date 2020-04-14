@@ -133,6 +133,11 @@ if [ -z "$(command -v column)" ]; then
 	exit 1;
 fi
 
+if [ -z "$(command -v base64)" ]; then
+	printf "Please install base64 before using this tool.\n";
+	exit 1;
+fi
+
 # Determine the location of the FileZilla sitemanager.xml file.
 
 if [ -f "$HOME/.config/filezilla/sitemanager.xml" ]; then # Check for sitemanager.xml in the default Linux home directory path.
