@@ -138,12 +138,17 @@ if [ -z "$(command -v base64)" ]; then
 	exit 1;
 fi
 
+if [ ! -z "$(command -v wslpath)" ] && [ -z "$WINDOWS_HOME" ]; then
+	WINDOWS_HOME="$(wslpath "$(wslvar USERPROFILE)")";
+fi
+
 # Determine the location of the FileZilla sitemanager.xml file.
 
 if [ -f "$HOME/.config/filezilla/sitemanager.xml" ]; then # Check for sitemanager.xml in the default Linux home directory path.
 	SITEMANAGER="$HOME/.config/filezilla/sitemanager.xml";
-elif [ -f "/mnt/c/Users/User/AppData/Roaming/FileZilla/sitemanager.xml" ]; then # Check for sitemanager.xml in the default WSL path.
-	SITEMANAGER="/mnt/c/Users/User/AppData/Roaming/FileZilla/sitemanager.xml";
+elif [ ! -z "$WINDOWS_HOME" ] && 
+	[ -f "${WINDOWS_HOME}/AppData/Roaming/FileZilla/sitemanager.xml" ]; then # Check for sitemanager.xml in the default WSL path.
+	SITEMANAGER="${WINDOWS_HOME}/AppData/Roaming/FileZilla/sitemanager.xml";
 else
 	printf "Filezilla Site Manager configuration not detected.\n";
 	exit 1;
